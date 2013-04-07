@@ -62,5 +62,3 @@ for my $pattern (keys %tests) {
     diag "test:$pattern";
     $t->get_ok($pattern)->status_is($tests{$pattern}->{status});
 }
-
-done_testing;
