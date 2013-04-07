@@ -3,7 +3,7 @@ use Module::Install::Repository;
 name 'Mojolicious-Plugin-AccessControl';
 all_from 'lib/Mojolicious/Plugin/AccessControl.pm';
 
-requires 'Mojolicious'     => '3.85';
+requires 'Mojolicious'     => '2.63';
 requires 'Net::CIDR::Lite' => '0.21';
 
 tests 't/*.t';
