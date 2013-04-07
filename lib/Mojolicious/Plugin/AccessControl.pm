@@ -12,7 +12,7 @@ use constant CONDITION_NAME => 'access';
 sub register {
     my ( $self, $app ) = @_;
 
-    $app->routes->add_condition( CONDITION_NAME => sub {
+    $app->routes->add_condition( CONDITION_NAME() => sub {
         my ( $r, $c, $cap, $args ) = @_;
 
         my $opt
