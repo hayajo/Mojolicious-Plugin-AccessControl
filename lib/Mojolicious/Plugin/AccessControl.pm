@@ -14,6 +14,7 @@ sub register {
 
     $app->routes->add_condition( CONDITION_NAME() => sub {
         my ( $r, $c, $cap, $args ) = @_;
+        $args ||= [];
 
         my $opt
             = ( ref $args->[0] eq 'HASH' )
