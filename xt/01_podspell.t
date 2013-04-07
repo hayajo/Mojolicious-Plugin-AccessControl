@@ -8,3 +8,5 @@ __DATA__
 hayajo
 hayajo@cpan.org
 Mojolicious::Plugin::AccessControl
+ip
+subdomain
