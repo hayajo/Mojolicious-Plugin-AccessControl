@@ -4,59 +4,84 @@ use warnings;
 our $VERSION = '0.01';
 
 use Mojo::Base 'Mojolicious::Plugin';
-use Carp ();
 use Net::CIDR::Lite;
+use Carp ();
+
+use constant CONDITION_NAME => 'access';
 
 sub register {
     my ( $self, $app ) = @_;
-    $app->routes->add_condition(
-        access => \&_access_control,
-    );
+
+    $app->routes->add_condition( CONDITION_NAME => sub {
+        my ( $r, $c, $cap, $args ) = @_;
+
+        my $opt
+            = ( ref $args->[0] eq 'HASH' )
+            ? shift @$args
+            : { cache => 1, }; # enabled caches
+
+        my $rules
+            = ( $opt->{cache} )
+            ? ( $r->{__PACKAGE__ . '._rules'} ||= _rules(@$args) ) # caches to Mojolicious::Routes::Route
+            : _rules(@$args);
+
+        for my $rule ( @$rules ) {
+            my ( $check, $allow ) = @{$rule};
+            my $result = $check->($c);
+            if ( defined $result && $result ) {
+                return $allow;
+            }
+        }
+
+        return 1;
+    } );
 }
 
-sub _access_control {
-    my ( $r, $c, $cap, $args ) = @_;
+sub _rules {
+    my @args = @_;
 
-    for ( my $i = 0; $i < @$args; $i += 2 ) {
-        my ( $allowing, $rule ) = ( $args->[$i], $args->[ $i + 1 ] );
+    my @rules;
+    for ( my $i = 0; $i < @args; $i += 2 ) {
+        my ( $allowing, $rule ) = ( $args[$i], $args[ $i + 1 ] );
         Carp::croak "must be allow or deny"
             unless $allowing =~ /^(allow|deny)$/;
 
         $allowing = ( $allowing eq 'allow' ) ? 1 : 0;
+        my $check = $rule;
 
-        if ( $rule eq 'all' ) {
-            return $allowing;
+        if ( $rule =~ /^ALL$/i ) {
+            $check = sub { 1 };
         }
         elsif ( $rule =~ /[A-Z]$/i ) {
-            my $host = $c->req->env->{'REMOTE_HOST'};
-            return $allowing
-                if ( defined $host && $host =~ /^(.*\.)?\Q${rule}\E$/ );
+            $check = sub {
+                my $host = $_[0]->req->env->{'REMOTE_HOST'};
+                return unless defined $host; # skip
+                return $host =~ /^(.*\.)?\Q${rule}\E$/;
+            };
         }
-        elsif ( ref($rule) eq 'CODE' ) {
-            my $res = $rule->($c);
-            return $allowing if ( defined $res && $res );
-        }
-        else {
-            my @ip    = ref $rule ? @$rule : ($rule);
+        elsif ( ref($rule) ne 'CODE' ) {
             my $cidr4 = Net::CIDR::Lite->new();
             my $cidr6 = Net::CIDR::Lite->new();
-            for my $ip (@ip) {
-                ( $ip =~ /:/ )
-                    ? $cidr6->add_any($ip)
-                    : $cidr4->add_any($ip);
-            }
-            my $addr = $c->tx->remote_address;
-            if ( defined $addr ) {
-                my $find_ip
-                    = ( $addr =~ /:/ )
-                    ? $cidr6->find($addr)
-                    : $cidr4->find($addr);
-                return $allowing if ($find_ip);
-            }
+            ( $rule =~ /:/ )
+                ? $cidr6->add_any($rule)
+                : $cidr4->add_any($rule);
+
+            $check = sub {
+                my $addr = $_[0]->tx->remote_address;
+                if ( defined $addr ) {
+                    my $find_ip
+                        = ( $addr =~ /:/ )
+                        ? $cidr6->find($addr)
+                        : $cidr4->find($addr);
+                    return ($find_ip) ? 1 : 0;
+                }
+            };
         }
+
+        push @rules, [ $check => $allowing ];
     }
 
-    return 1; # allow
+    return \@rules;
 }
 
 1;
@@ -64,7 +89,7 @@ __END__
 
 =head1 NAME
 
-Mojolicious::Plugin::AccessControl -
+Mojolicious::Plugin::AccessControl - Access control
 
 =head1 SYNOPSIS
 
@@ -78,8 +103,10 @@ Mojolicious::Plugin::AccessControl -
     my $r = $self->routes;
     $r->get('/')->to('example#welcome')->over( 'access' => [
         allow => 'allowhost.com',
-        allow => ['127.0.0.1', '192.168.0.3', '192.168.0.5', '192.168.0.7'],
+        allow => '127.0.0.1'
+        allow => '192.168.0.3',
         deny  => '192.168.0.0/24',
+        allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
         deny  => 'all',
     ] );
   }
@@ -92,14 +119,48 @@ Mojolicious::Plugin::AccessControl -
     $self->render('index');
   }, 'access' => [
       allow => 'allowhost.com',
-      allow => ['127.0.0.1', '192.168.0.3', '192.168.0.5', '192.168.0.7'],
+      allow => '127.0.0.1'
+      allow => '192.168.0.3',
       deny  => '192.168.0.0/24',
+      allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
       deny  => 'all',
   ];
 
 =head1 DESCRIPTION
 
-Mojolicious::Plugin::AccessControl is
+Mojolicious::Plugin::AccessControl is intended for restricting access to app routes.
+
+This adds the condition to Mojolicious::Routes, which is named 'access'.
+
+=head1 ARGUMENTS
+
+An arrayref of rules. Each rule consists of directive allow or deny and their argument. Rules are checked in the order of their record to the first match. Code rules always match if they return a defined non-zero value. Access is granted if no rule matched.
+
+=over 2
+
+=item "all"
+
+always matched.
+
+=item ip
+
+matches on one ip or ip range.
+
+See L<Net::CIDR::Lite>.
+
+=item remote_host
+
+matches on domain or subdomain of remote_host if it can be resolved.
+
+If Mojo::Message::Request#env->{REMOTE_HOST} is not set, the rule is skipped.
+
+=item code
+
+an arbitrary code reference for checking arbitrary properties of the request.
+
+this function takes Mojolicious::Controller as parameter. The rule is skipped if the code returns undef.
+
+=back
 
 =head1 AUTHOR
 
