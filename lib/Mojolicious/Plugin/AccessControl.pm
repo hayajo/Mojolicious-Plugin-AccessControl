@@ -61,20 +61,12 @@ sub _rules {
             };
         }
         elsif ( ref($rule) ne 'CODE' ) {
-            my $cidr4 = Net::CIDR::Lite->new();
-            my $cidr6 = Net::CIDR::Lite->new();
-            ( $rule =~ /:/ )
-                ? $cidr6->add_any($rule)
-                : $cidr4->add_any($rule);
-
+            my $cidr = Net::CIDR::Lite->new();
+            $cidr->add_any($rule);
             $check = sub {
                 my $addr = $_[0]->tx->remote_address;
                 if ( defined $addr ) {
-                    my $find_ip
-                        = ( $addr =~ /:/ )
-                        ? $cidr6->find($addr)
-                        : $cidr4->find($addr);
-                    return ($find_ip) ? 1 : 0;
+                    return ( $cidr->find($addr) ) ? 1 : 0;
                 }
             };
         }
