@@ -109,7 +109,7 @@ Mojolicious::Plugin::AccessControl - Access control
         deny  => '192.168.0.0/24',
         allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
         deny  => 'all',
-    ] );
+    ] )->name('index');
   }
 
   # Mojolicious::Lite
@@ -117,15 +117,19 @@ Mojolicious::Plugin::AccessControl - Access control
 
   get '/' => sub {
     my $self = shift;
-    $self->render('index');
-  }, 'access' => [
+    ...
+    ...
+    ...
+  },
+  'access' => [
       allow => 'allowhost.com',
       allow => '127.0.0.1'
       allow => '192.168.0.3',
       deny  => '192.168.0.0/24',
       allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
       deny  => 'all',
-  ];
+  ],
+  'index';
 
 =head1 DESCRIPTION
 
