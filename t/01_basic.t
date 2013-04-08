@@ -34,6 +34,13 @@ my %tests = (
         ],
         status => 200,
     },
+    '/deny_code' => {
+        rules => [
+            { deny_code => 403 },
+            deny => '127.0.0.1'
+        ],
+        status => 403,
+    }
 );
 
 plugin 'AccessControl';

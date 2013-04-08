@@ -30,6 +30,10 @@ sub register {
             my ( $check, $allow ) = @{$rule};
             my $result = $check->($c);
             if ( defined $result && $result ) {
+                if ( !$allow && $opt->{deny_code} ) {
+                    $c->tx->res->code( $opt->{deny_code} );
+                    $c->render( text => $opt->{deny_message} || 'Forbidden' );
+                }
                 return $allow;
             }
         }
