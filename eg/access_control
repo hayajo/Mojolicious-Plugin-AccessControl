@@ -5,20 +5,20 @@ plugin 'AccessControl';
 
 get '/' => 'index';
 
-get '/only_local',
+get '/only_local' => (
     'access' => [
         allow => '127.0.0.1',
         allow => '192.168.182.0/24',
-        deny => 'all',
-    ],
-    'local';
+        deny  => 'all',
+    ]
+) => 'local';
 
-get '/only_firefox',
+get '/only_firefox' => (
     'access' => [
         allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
-        deny => 'all'
-    ],
-    'firefox';
+        deny  => 'all'
+    ]
+) => 'firefox';
 
 app->start;
 __DATA__

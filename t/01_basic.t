@@ -39,9 +39,9 @@ my %tests = (
 plugin 'AccessControl';
 
 for my $pattern (keys %tests) {
-    get $pattern => sub {
+    get $pattern => ( 'access' => $tests{$pattern}->{rules} ) => sub {
         $_[0]->render(text => $pattern);
-    }, 'access' => $tests{$pattern}->{rules};
+    };
 }
 
 app->start;

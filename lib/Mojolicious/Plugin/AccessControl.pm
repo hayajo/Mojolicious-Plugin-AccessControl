@@ -90,9 +90,6 @@ Mojolicious::Plugin::AccessControl - Access control
   sub stratup {
     my $self = shift;
     $self->plugin('AccessControl');
-    ...
-    ...
-    ...
     my $r = $self->routes;
     $r->get('/')->to('example#welcome')->over( 'access' => [
         allow => 'allowhost.com',
@@ -107,21 +104,17 @@ Mojolicious::Plugin::AccessControl - Access control
   # Mojolicious::Lite
   plugin 'AccessControl';
 
-  get '/' => sub {
-    my $self = shift;
-    ...
-    ...
-    ...
-  },
-  'access' => [
+  get '/' => ( 'access' => [
       allow => 'allowhost.com',
-      allow => '127.0.0.1'
+      allow => '127.0.0.1',
       allow => '192.168.0.3',
       deny  => '192.168.0.0/24',
       allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
       deny  => 'all',
-  ],
-  'index';
+  ] ) => sub {
+      my $self = shift;
+      # do something
+  } => 'index';
 
 =head1 DESCRIPTION
 
@@ -129,9 +122,19 @@ Mojolicious::Plugin::AccessControl is intended for restricting access to app rou
 
 This adds the condition to Mojolicious::Routes, which is named 'access'.
 
+=head1 METHODS
+
+L<Mojolicious::Plugin::AccessControl> inherits all methods from L<Mojolicious::Plugin> and implements the following new ones.
+
+=head2 register
+
+  $plugin->register(Mojolicious->new);
+
+Register condition in L<Mojolicious> application.
+
 =head1 ARGUMENTS
 
-An arrayref of rules. Each rule consists of directive allow or deny and their argument. Rules are checked in the order of their record to the first match. Code rules always match if they return a defined non-zero value. Access is granted if no rule matched.
+'access' takes an arrayref of rules. Each rule consists of directive allow or deny and their argument. Rules are checked in the order of their record to the first match. Code rules always match if they return a defined non-zero value. Access is granted if no rule matched.
 
 =over 2
 
@@ -165,7 +168,7 @@ hayajo E<lt>hayajo@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<Plack::Middleware::Access>, L<Plack::Builder::Conditionals>,
+L<Mojolicious>, L<Mojolicious::Guides::Routing>, L<Plack::Middleware::Access>, L<Plack::Builder::Conditionals>,
 
 =head1 LICENSE
 
