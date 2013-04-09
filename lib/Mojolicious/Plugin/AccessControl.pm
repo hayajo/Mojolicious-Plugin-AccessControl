@@ -19,7 +19,11 @@ sub register {
         my $opt
             = ( ref $args->[0] eq 'HASH' )
             ? shift @$args
-            : { cache => 1, }; # enabled caches
+            : { cache => 1 }; # enabled caches
+
+        if ( $opt->{on_deny} && ref $opt->{on_deny} ne 'CODE' ) {
+            Carp::croak "on_deny must be a CODEREF";
+        }
 
         my $rules
             = ( $opt->{cache} )
@@ -30,9 +34,8 @@ sub register {
             my ( $check, $allow ) = @{$rule};
             my $result = $check->($c);
             if ( defined $result && $result ) {
-                if ( !$allow && $opt->{deny_code} ) {
-                    $c->tx->res->code( $opt->{deny_code} );
-                    $c->render( text => $opt->{deny_message} || 'Forbidden' );
+                if ( !$allow && $opt->{on_deny} ) {
+                    $opt->{on_deny}->($c);
                 }
                 return $allow;
             }
