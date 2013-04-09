@@ -1,4 +1,7 @@
 Revision history for Perl extension Mojolicious::Plugin::AccessControl
 
+0.02
+        - added 'on_deny' option
+
 0.01
         - original version
