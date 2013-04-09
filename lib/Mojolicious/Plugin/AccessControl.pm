@@ -19,7 +19,8 @@ sub register {
         my $opt
             = ( ref $args->[0] eq 'HASH' )
             ? shift @$args
-            : { cache => 1 }; # enabled caches
+            : {};
+        $opt->{cache} = 1 unless ( defined $opt->{cache} ); # enabled caches
 
         if ( $opt->{on_deny} && ref $opt->{on_deny} ne 'CODE' ) {
             Carp::croak "on_deny must be a CODEREF";
@@ -27,8 +28,8 @@ sub register {
 
         my $rules
             = ( $opt->{cache} )
-            ? ( $r->{__PACKAGE__ . '._rules'} ||= _rules(@$args) ) # caches to Mojolicious::Routes::Route
-            : _rules(@$args);
+            ? ( $r->{__PACKAGE__ . '._rules'} ||= $self->_rules(@$args) ) # caches to Mojolicious::Routes::Route
+            : $self->_rules(@$args);
 
         for my $rule ( @$rules ) {
             my ( $check, $allow ) = @{$rule};
@@ -46,7 +47,7 @@ sub register {
 }
 
 sub _rules {
-    my @args = @_;
+    my ($self, @args) = @_;
 
     my @rules;
     for ( my $i = 0; $i < @args; $i += 2 ) {
