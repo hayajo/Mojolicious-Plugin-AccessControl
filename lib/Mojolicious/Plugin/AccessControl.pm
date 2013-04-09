@@ -124,7 +124,7 @@ Mojolicious::Plugin::AccessControl - Access control
       # do something
   } => 'index';
 
-  # call 'on_deny' which is a code reference, if access was denined.
+  # if access was denined, run 'on_deny' which is a code reference.
   get '/deny_all' => ( 'access' => [
       { on_deny => sub {
           my $self = shift; # Mojolicious::Controller
@@ -180,6 +180,35 @@ If Mojo::Message::Request#env->{REMOTE_HOST} is not set, the rule is skipped.
 an arbitrary code reference for checking arbitrary properties of the request.
 
 this function takes Mojolicious::Controller as parameter. The rule is skipped if the code returns undef.
+
+=back
+
+=head1 OPTIONS
+
+'access' takes an arrayref of rules. If there is a hashref to the top, it considered options.
+
+  get '/only_local' => ( 'access' => [
+      # options
+      { on_deny => sub {
+          my $self = shift; # Mojolicious::Controller
+          $self->res->code(403);
+          $self->render( text => 'Forbidden' );
+      } },
+      # rules
+      allow => '127.0.0.1',
+      deny  => 'all',
+  ] ) => sub {
+      my $self = shift;
+      # do something
+  } => 'index';
+
+=over 2
+
+=item "on_deny"
+
+an arbitrary code reference.
+
+if access was denied, run this callback.
 
 =back
 
