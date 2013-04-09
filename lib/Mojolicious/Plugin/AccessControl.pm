@@ -123,6 +123,19 @@ Mojolicious::Plugin::AccessControl - Access control
       # do something
   } => 'index';
 
+  # call 'on_deny' which is a code reference, if access was denined.
+  get '/deny_all' => ( 'access' => [
+      { on_deny => sub {
+          my $self = shift; # Mojolicious::Controller
+          $self->res->code(403);
+          $self->render( text => 'Forbidden' );
+      } },
+      deny  => 'all',
+  ] ) => sub {
+      my $self = shift;
+      # do something
+  } => 'index';
+
 =head1 DESCRIPTION
 
 Mojolicious::Plugin::AccessControl is intended for restricting access to app routes.
