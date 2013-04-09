@@ -19,17 +19,25 @@ sub register {
         my $opt
             = ( ref $args->[0] eq 'HASH' )
             ? shift @$args
-            : { cache => 1, }; # enabled caches
+            : {};
+        $opt->{cache} = 1 unless ( defined $opt->{cache} ); # enabled caches
+
+        if ( $opt->{on_deny} && ref $opt->{on_deny} ne 'CODE' ) {
+            Carp::croak "on_deny must be a CODEREF";
+        }
 
         my $rules
             = ( $opt->{cache} )
-            ? ( $r->{__PACKAGE__ . '._rules'} ||= _rules(@$args) ) # caches to Mojolicious::Routes::Route
-            : _rules(@$args);
+            ? ( $r->{__PACKAGE__ . '._rules'} ||= $self->_rules(@$args) ) # caches to Mojolicious::Routes::Route
+            : $self->_rules(@$args);
 
         for my $rule ( @$rules ) {
             my ( $check, $allow ) = @{$rule};
             my $result = $check->($c);
             if ( defined $result && $result ) {
+                if ( !$allow && $opt->{on_deny} ) {
+                    $opt->{on_deny}->($c);
+                }
                 return $allow;
             }
         }
@@ -39,7 +47,7 @@ sub register {
 }
 
 sub _rules {
-    my @args = @_;
+    my ($self, @args) = @_;
 
     my @rules;
     for ( my $i = 0; $i < @args; $i += 2 ) {
@@ -116,6 +124,19 @@ Mojolicious::Plugin::AccessControl - Access control
       # do something
   } => 'index';
 
+  # if access was denined, run 'on_deny' which is a code reference.
+  get '/deny_all' => ( 'access' => [
+      { on_deny => sub {
+          my $self = shift; # Mojolicious::Controller
+          $self->res->code(403);
+          $self->render( text => 'Forbidden' );
+      } },
+      deny  => 'all',
+  ] ) => sub {
+      my $self = shift;
+      # do something
+  } => 'index';
+
 =head1 DESCRIPTION
 
 Mojolicious::Plugin::AccessControl is intended for restricting access to app routes.
@@ -159,6 +180,35 @@ If Mojo::Message::Request#env->{REMOTE_HOST} is not set, the rule is skipped.
 an arbitrary code reference for checking arbitrary properties of the request.
 
 this function takes Mojolicious::Controller as parameter. The rule is skipped if the code returns undef.
+
+=back
+
+=head1 OPTIONS
+
+'access' takes an arrayref of rules. If there is a hashref to the top, it considered options.
+
+  get '/only_local' => ( 'access' => [
+      # options
+      { on_deny => sub {
+          my $self = shift; # Mojolicious::Controller
+          $self->res->code(403);
+          $self->render( text => 'Forbidden' );
+      } },
+      # rules
+      allow => '127.0.0.1',
+      deny  => 'all',
+  ] ) => sub {
+      my $self = shift;
+      # do something
+  } => 'index';
+
+=over 2
+
+=item "on_deny"
+
+an arbitrary code reference.
+
+if access was denied, run this callback.
 
 =back
 

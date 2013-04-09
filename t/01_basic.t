@@ -5,6 +5,7 @@ my %tests = (
     '/' => {
         rules => [],
         status => 200,
+        content => '/',
     },
     '/deny' => {
         rules => [ deny => '127.0.0.1' ],
@@ -17,6 +18,7 @@ my %tests = (
     '/only_127_0_0_1' => {
         rules => [ allow => '127.0.0.1', deny => 'all' ],
         status => 200,
+        content => '/only_127_0_0_1',
     },
     '/deny_localhost' => {
         rules => [ deny => 'localhost' ],
@@ -33,7 +35,22 @@ my %tests = (
             deny  => 'all',
         ],
         status => 200,
+        content => '/skip_resolve_hostname',
     },
+    '/on_deny' => {
+        rules => [
+            {
+                on_deny => sub {
+                    my $self = shift;
+                    $self->res->code(403);
+                    $self->render(text => 'Forbidden');
+                },
+            },
+            deny => '127.0.0.1'
+        ],
+        status => 403,
+        content => 'Forbidden',
+    }
 );
 
 plugin 'AccessControl';
@@ -49,8 +66,6 @@ app->start;
 use Test::Mojo;
 use Test::More;
 
-plan tests => scalar(keys %tests) * 2;
-
 my $t = Test::Mojo->new();
 $t->app->hook(
     before_dispatch => sub {
@@ -61,4 +76,9 @@ $t->app->hook(
 for my $pattern (keys %tests) {
     diag "test:$pattern";
     $t->get_ok($pattern)->status_is($tests{$pattern}->{status});
+    if ( my $expect = $tests{$pattern}->{content} ) {
+        $t->content_is($expect);
+    }
 }
+
+done_testing;
