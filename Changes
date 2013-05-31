@@ -3,5 +3,8 @@ Revision history for Perl extension Mojolicious::Plugin::AccessControl
 {{$NEXT}}
         - Millaize
 
+0.02
+        - added 'on_deny' option
+
 0.01
         - original version
