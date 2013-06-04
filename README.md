@@ -11,7 +11,7 @@ Mojolicious::Plugin::AccessControl - Access control
       my $r = $self->routes;
       $r->get('/')->to('example#welcome')->over( 'access' => [
           allow => 'allowhost.com',
-          allow => '127.0.0.1'
+          allow => '127.0.0.1',
           allow => '192.168.0.3',
           deny  => '192.168.0.0/24',
           allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
@@ -65,7 +65,21 @@ Register condition in [Mojolicious](http://search.cpan.org/perldoc?Mojolicious) 
 
 # ARGUMENTS
 
-'access' takes an arrayref of rules. Each rule consists of directive allow or deny and their argument. Rules are checked in the order of their record to the first match. Code rules always match if they return a defined non-zero value. Access is granted if no rule matched.
+    get '/' => ( 'access' => [
+        allow => 'allowhost.com',
+        allow => '127.0.0.1',
+        allow => '192.168.0.3',
+        deny  => '192.168.0.0/24',
+        allow => sub { $_[0]->req->headers->user_agent =~ /Firefox/ },
+        deny  => 'all',
+    ] ) => sub {
+        my $self = shift;
+        # do something
+    } => 'index';
+
+'access' takes an arrayref of rules.
+
+Each rule consists of directive allow or deny and their argument. Rules are checked in the order of their record to the first match. Code rules always match if they return a defined non-zero value. Access is granted if no rule matched.
 
 - "all"
 
@@ -95,11 +109,13 @@ Register condition in [Mojolicious](http://search.cpan.org/perldoc?Mojolicious) 
 
     get '/only_local' => ( 'access' => [
         # options
-        { on_deny => sub {
-            my $self = shift; # Mojolicious::Controller
-            $self->res->code(403);
-            $self->render( text => 'Forbidden' );
-        } },
+        {
+          on_deny => sub {
+              my $self = shift; # Mojolicious::Controller
+              $self->res->code(403);
+              $self->render( text => 'Forbidden' );
+          },
+        },
         # rules
         allow => '127.0.0.1',
         deny  => 'all',
