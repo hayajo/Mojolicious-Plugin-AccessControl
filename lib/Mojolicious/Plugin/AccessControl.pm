@@ -12,38 +12,43 @@ use constant CONDITION_NAME => 'access';
 sub register {
     my ( $self, $app ) = @_;
 
-    $app->routes->add_condition( CONDITION_NAME() => sub {
-        my ( $r, $c, $cap, $args ) = @_;
-        $args ||= [];
+    $app->routes->add_condition(
+        CONDITION_NAME() => sub {
+            my ( $r, $c, $cap, $args ) = @_;
+            $args ||= [];
 
-        my $opt
-            = ( ref $args->[0] eq 'HASH' )
-            ? shift @$args
-            : {};
-        $opt->{cache} = 1 unless ( defined $opt->{cache} ); # enabled caches
+            my $opt
+                = ( ref $args->[0] eq 'HASH' )
+                ? shift @$args
+                : {};
 
-        if ( $opt->{on_deny} && ref $opt->{on_deny} ne 'CODE' ) {
-            Carp::croak "on_deny must be a CODEREF";
-        }
-
-        my $rules
-            = ( $opt->{cache} )
-            ? ( $r->{__PACKAGE__ . '._rules'} ||= $self->_rules(@$args) ) # caches to Mojolicious::Routes::Route
-            : $self->_rules(@$args);
-
-        for my $rule ( @$rules ) {
-            my ( $check, $allow ) = @{$rule};
-            my $result = $check->($c);
-            if ( defined $result && $result ) {
-                if ( !$allow && $opt->{on_deny} ) {
-                    $opt->{on_deny}->($c);
-                }
-                return $allow;
+            if ( $opt->{on_deny} && ref $opt->{on_deny} ne 'CODE' ) {
+                Carp::croak "on_deny must be a CODEREF";
             }
-        }
 
-        return 1;
-    } );
+            $opt->{cache} = 1 unless ( defined $opt->{cache} );
+            my $rules = ( $opt->{cache} )
+                ? ( $r->{ __PACKAGE__ . '._rules' } ||= $self->_rules(@$args) ) # caches to Mojolicious::Routes::Route
+                : $self->_rules(@$args);
+
+            for my $rule (@$rules) {
+                my ( $check, $allow ) = @{$rule};
+
+                my $result = $check->($c);
+                if ( defined $result && $result ) {
+
+                    # denied
+                    if ( !$allow && $opt->{on_deny} ) {
+                        $opt->{on_deny}->($c);
+                    }
+
+                    return $allow;
+                }
+            }
+
+            return 1;
+        }
+    );
 }
 
 sub _rules {
@@ -52,6 +57,7 @@ sub _rules {
     my @rules;
     for ( my $i = 0; $i < @args; $i += 2 ) {
         my ( $allowing, $rule ) = ( $args[$i], $args[ $i + 1 ] );
+
         Carp::croak "must be allow or deny"
             unless $allowing =~ /^(allow|deny)$/;
 
@@ -59,18 +65,19 @@ sub _rules {
         my $check = $rule;
 
         if ( $rule =~ /^ALL$/i ) {
-            $check = sub { 1 };
+            $check = sub {1};
         }
         elsif ( $rule =~ /[A-Z]$/i ) {
             $check = sub {
                 my $host = $_[0]->req->env->{'REMOTE_HOST'};
-                return unless defined $host; # skip
+                return unless defined $host;    # skip
                 return $host =~ /^(.*\.)?\Q${rule}\E$/;
             };
         }
         elsif ( ref($rule) ne 'CODE' ) {
             my $cidr = Net::CIDR::Lite->new();
             $cidr->add_any($rule);
+
             $check = sub {
                 my $addr = $_[0]->tx->remote_address;
                 if ( defined $addr ) {
