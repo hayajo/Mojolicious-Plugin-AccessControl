@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::AccessControl;
 use strict;
 use warnings;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Mojo::Base 'Mojolicious::Plugin';
 use Net::CIDR::Lite;
