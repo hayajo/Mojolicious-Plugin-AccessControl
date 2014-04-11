@@ -17,10 +17,15 @@ sub register {
             my ( $r, $c, $cap, $args ) = @_;
             $args ||= [];
 
-            my $opt
-                = ( ref $args->[0] eq 'HASH' )
-                ? shift @$args
-                : {};
+            my $opt = {};
+            my @rule_list = @$args;
+
+            if ( ref $args->[0] eq 'HASH' ) {
+                $opt = $args->[0];
+
+                # Remove option ref from rule list
+                @rule_list = splice(@$args, 1);
+            }
 
             if ( $opt->{on_deny} && ref $opt->{on_deny} ne 'CODE' ) {
                 Carp::croak "on_deny must be a CODEREF";
@@ -28,8 +33,8 @@ sub register {
 
             $opt->{cache} = 1 unless ( defined $opt->{cache} );
             my $rules = ( $opt->{cache} )
-                ? ( $r->{ __PACKAGE__ . '._rules' } ||= $self->_rules(@$args) ) # caches to Mojolicious::Routes::Route
-                : $self->_rules(@$args);
+                ? ( $r->{ __PACKAGE__ . '._rules' } ||= $self->_rules(@rule_list) ) # caches to Mojolicious::Routes::Route
+                : $self->_rules(@rule_list);
 
             for my $rule (@$rules) {
                 my ( $check, $allow ) = @{$rule};
