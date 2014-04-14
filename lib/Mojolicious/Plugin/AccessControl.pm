@@ -244,6 +244,16 @@ if access was denied, run this callback.
 
 hayajo E<lt>hayajo@cpan.orgE<gt>
 
+=head1 CONTRIBUTORS
+
+Many thanks to the contributors for their work.
+
+=over 4
+
+=item oliverguenther@github
+
+=back
+
 =head1 SEE ALSO
 
 L<Mojolicious>, L<Mojolicious::Guides::Routing>, L<Plack::Middleware::Access>, L<Plack::Builder::Conditionals>,

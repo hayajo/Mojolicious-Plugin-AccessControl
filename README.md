@@ -134,6 +134,12 @@ Each rule consists of directive allow or deny and their argument. Rules are chec
 
 hayajo <hayajo@cpan.org>
 
+# CONTRIBUTORS
+
+Many thanks to the contributors for their work.
+
+- oliverguenther@github
+
 # SEE ALSO
 
 [Mojolicious](http://search.cpan.org/perldoc?Mojolicious), [Mojolicious::Guides::Routing](http://search.cpan.org/perldoc?Mojolicious::Guides::Routing), [Plack::Middleware::Access](http://search.cpan.org/perldoc?Plack::Middleware::Access), [Plack::Builder::Conditionals](http://search.cpan.org/perldoc?Plack::Builder::Conditionals),
