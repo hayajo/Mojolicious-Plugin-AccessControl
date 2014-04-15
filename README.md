@@ -55,13 +55,13 @@ This adds the condition to Mojolicious::Routes, which is named 'access'.
 
 # METHODS
 
-[Mojolicious::Plugin::AccessControl](http://search.cpan.org/perldoc?Mojolicious::Plugin::AccessControl) inherits all methods from [Mojolicious::Plugin](http://search.cpan.org/perldoc?Mojolicious::Plugin) and implements the following new ones.
+[Mojolicious::Plugin::AccessControl](https://metacpan.org/pod/Mojolicious::Plugin::AccessControl) inherits all methods from [Mojolicious::Plugin](https://metacpan.org/pod/Mojolicious::Plugin) and implements the following new ones.
 
 ## register
 
     $plugin->register(Mojolicious->new);
 
-Register condition in [Mojolicious](http://search.cpan.org/perldoc?Mojolicious) application.
+Register condition in [Mojolicious](https://metacpan.org/pod/Mojolicious) application.
 
 # ARGUMENTS
 
@@ -89,7 +89,7 @@ Each rule consists of directive allow or deny and their argument. Rules are chec
 
     matches on one ip or ip range.
 
-    See [Net::CIDR::Lite](http://search.cpan.org/perldoc?Net::CIDR::Lite).
+    See [Net::CIDR::Lite](https://metacpan.org/pod/Net::CIDR::Lite).
 
 - remote\_host
 
@@ -142,7 +142,7 @@ Many thanks to the contributors for their work.
 
 # SEE ALSO
 
-[Mojolicious](http://search.cpan.org/perldoc?Mojolicious), [Mojolicious::Guides::Routing](http://search.cpan.org/perldoc?Mojolicious::Guides::Routing), [Plack::Middleware::Access](http://search.cpan.org/perldoc?Plack::Middleware::Access), [Plack::Builder::Conditionals](http://search.cpan.org/perldoc?Plack::Builder::Conditionals),
+[Mojolicious](https://metacpan.org/pod/Mojolicious), [Mojolicious::Guides::Routing](https://metacpan.org/pod/Mojolicious::Guides::Routing), [Plack::Middleware::Access](https://metacpan.org/pod/Plack::Middleware::Access), [Plack::Builder::Conditionals](https://metacpan.org/pod/Plack::Builder::Conditionals),
 
 # LICENSE
 
