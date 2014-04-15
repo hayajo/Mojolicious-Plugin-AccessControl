@@ -1,6 +1,7 @@
 Revision history for Perl extension Mojolicious::Plugin::AccessControl
 
 {{$NEXT}}
+        - fixed a bug on cached routes. thanks oliverguenther@github.
 
 0.03  2013-06-05 08:34:23 JST
         - Millaize
