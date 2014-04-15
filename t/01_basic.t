@@ -74,10 +74,12 @@ $t->app->hook(
 );
 
 for my $pattern (keys %tests) {
-    diag "test:$pattern";
-    $t->get_ok($pattern)->status_is($tests{$pattern}->{status});
-    if ( my $expect = $tests{$pattern}->{content} ) {
-        $t->content_is($expect);
+    for (my $i = 1; $i <= 3; $i++) {
+        diag "test$i:$pattern";
+        $t->get_ok($pattern)->status_is( $tests{$pattern}->{status} );
+        if ( my $expect = $tests{$pattern}->{content} ) {
+            $t->content_is($expect);
+        }
     }
 }
 
